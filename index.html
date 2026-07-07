@@ -22,6 +22,7 @@
 <style>
 :root{
   --bg:#0f0d15; --surface:#15111d; --surface-2:#1a1623; --surface-inset:#100d17;
+  --seam:#0b0912; /* shared handoff tone between the two scroll-scrub panels */
   --border:#221d2c; --border-strong:#2c2638; --border-violet:#34284a;
   --text-hi:#f4f1f8; --text:#e7e1ef; --text-mid:#b3aac0; --text-soft:#8b8299; --text-lo:#756c85;
   --accent:#c64ff0; --accent-deep:#9b3ec9; --accent-soft:#c08fe8; --cyan:#6cc8e8; --green:#46d39a;
@@ -66,6 +67,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid rgb
 #filmc{position:absolute;inset:0;width:100%;height:100%;display:block}
 .fshade{position:absolute;inset:0;pointer-events:none;
   background:
+    linear-gradient(180deg,transparent 80%,var(--seam) 100%),   /* seam lock: bottom edge eases to the shared handoff tone */
     radial-gradient(ellipse 120% 100% at 50% 50%,transparent 55%,rgba(6,5,10,.72) 100%),
     linear-gradient(180deg,rgba(15,13,21,.35) 0%,transparent 26%,transparent 70%,rgba(15,13,21,.7) 100%)}
 .fch{position:absolute;left:6.5vw;top:50%;transform:translateY(-50%);max-width:min(580px,33vw);text-align:left;
@@ -90,7 +92,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid rgb
 .scrub{height:540vh;position:relative}
 .sticky{position:sticky;top:0;height:100vh;overflow:hidden;
   background:
-    linear-gradient(180deg,#000 0%,rgba(0,0,0,.55) 40%,rgba(0,0,0,0) 72%),
+    linear-gradient(180deg,var(--seam) 0%,rgba(0,0,0,.5) 14%,rgba(0,0,0,.55) 40%,rgba(0,0,0,0) 72%),
     radial-gradient(ellipse 70% 55% at 50% 110%,rgba(198,79,240,.10),transparent 60%),
     radial-gradient(ellipse 90% 70% at 50% 30%,#0c0a12 0%,#0b0911 60%,#090710 100%)}
 .floorglow{position:absolute;left:50%;bottom:7vh;transform:translateX(-50%);width:72vw;height:17vh;pointer-events:none;
@@ -215,12 +217,31 @@ section{position:relative;padding:82px 7vw;max-width:1240px;margin:0 auto}
 @keyframes dflow{0%,100%{transform:scaleX(.45)}50%{transform:scaleX(.95)}}
 .dspd{font-family:monospace;font-size:10.5px;color:var(--text-lo);min-width:56px;text-align:right}
 .pbar{height:3px;border-radius:5px;background:#1c1826;overflow:hidden;margin-bottom:12px}
-.pbar i{display:block;height:100%;border-radius:5px;background:rgba(198,79,240,.5);
-  animation:pfillx 9s linear infinite;transform-origin:left}
-@keyframes pfillx{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.pbar i{display:block;height:100%;border-radius:5px;
+  background:linear-gradient(90deg,rgba(198,79,240,.5),rgba(198,79,240,.85));
+  animation:pfillx 13s linear infinite;transform-origin:left}
+/* fill left→right evenly, hold full, evaporate, then a clear empty pause before restarting */
+@keyframes pfillx{
+  0%{transform:scaleX(0);opacity:1}
+  4%{transform:scaleX(0);opacity:1}
+  48%{transform:scaleX(1);opacity:1}
+  60%{transform:scaleX(1);opacity:1}
+  82%{transform:scaleX(1);opacity:0}
+  100%{transform:scaleX(0);opacity:0}}
 .pieces{display:flex;gap:3px;margin-bottom:12px}
-.pieces i{flex:1;height:8px;border-radius:2px;background:#1c1826;animation:pon 9s linear infinite}
-@keyframes pon{0%{background:#1c1826}6%,100%{background:rgba(198,79,240,.38)}}
+.pieces i{flex:1;height:8px;border-radius:2px;background:#1c1826;transform-origin:center bottom;
+  animation:piecearrive 13s linear infinite;will-change:transform,background,box-shadow}
+/* fills left→right in lockstep with the playhead bar, then evaporates together */
+@keyframes piecearrive{
+  0%{background:#1c1826;transform:scaleY(.55);box-shadow:none}
+  2%{background:rgba(108,200,232,.5);transform:scaleY(1.15);box-shadow:0 0 8px rgba(108,200,232,.45)}
+  5%{background:rgba(198,79,240,.5);transform:scaleY(1);box-shadow:0 0 7px rgba(198,79,240,.38)}
+  60%{background:rgba(198,79,240,.5);box-shadow:0 0 6px rgba(198,79,240,.26)}
+  70%{background:#1c1826;transform:scaleY(.55);box-shadow:none}
+  100%{background:#1c1826;transform:scaleY(.55);box-shadow:none}}
+@media(prefers-reduced-motion:reduce){
+  .pbar i{animation:none;transform:scaleX(.72)}
+  .pieces i{animation:none;background:rgba(198,79,240,.38);box-shadow:none}}
 .pcap{font-size:11px;color:var(--text-lo);font-weight:600;display:flex;align-items:center;gap:7px}
 .pcap i{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s ease-in-out infinite}
 .card{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;transition:border-color .25s,transform .25s}
@@ -274,10 +295,12 @@ section{position:relative;padding:82px 7vw;max-width:1240px;margin:0 auto}
 /* manifesto quote */
 .manifesto{position:relative;padding:120px 7vw;text-align:center;overflow:hidden}
 .manifesto::before{content:"";position:absolute;inset:0;pointer-events:none;
-  background:radial-gradient(ellipse 85% 80% at 50% 50%,rgba(198,79,240,.045),transparent 80%)}
+  background:radial-gradient(ellipse 85% 62% at 50% 48%,rgba(198,79,240,.05),transparent 70%);
+  -webkit-mask:linear-gradient(180deg,transparent 0,#000 26%,#000 74%,transparent 100%);
+          mask:linear-gradient(180deg,transparent 0,#000 26%,#000 74%,transparent 100%)}
 .manifesto .orb{position:absolute;border-radius:50%;filter:blur(70px);pointer-events:none;opacity:.3}
-.manifesto .orb.a{width:340px;height:340px;left:8%;top:12%;background:rgba(198,79,240,.16);animation:orbf 14s ease-in-out infinite}
-.manifesto .orb.b{width:280px;height:280px;right:6%;bottom:8%;background:rgba(108,200,232,.10);animation:orbf 18s ease-in-out infinite reverse}
+.manifesto .orb.a{width:300px;height:300px;left:6%;top:16%;background:rgba(198,79,240,.09);animation:orbf 14s ease-in-out infinite}
+.manifesto .orb.b{width:280px;height:280px;right:6%;bottom:16%;background:rgba(108,200,232,.10);animation:orbf 18s ease-in-out infinite reverse}
 @keyframes orbf{0%,100%{transform:translate(0,0)}33%{transform:translate(30px,-24px)}66%{transform:translate(-22px,18px)}}
 .manifesto .qm{display:none}
 .manifesto blockquote{position:relative;font-family:var(--serif);font-weight:500;
@@ -298,7 +321,9 @@ section{position:relative;padding:82px 7vw;max-width:1240px;margin:0 auto}
 
 .cta-wrap{text-align:center;padding:100px 7vw 120px;position:relative;overflow:hidden}
 .cta-wrap::before{content:"";position:absolute;inset:0;animation:ctapulse 5s ease-in-out infinite;
-  background:radial-gradient(ellipse 55% 60% at 50% 62%,rgba(198,79,240,.13),transparent 70%);pointer-events:none}
+  background:radial-gradient(ellipse 55% 50% at 50% 58%,rgba(198,79,240,.13),transparent 68%);pointer-events:none;
+  -webkit-mask:linear-gradient(180deg,transparent 0,#000 22%,#000 82%,transparent 100%);
+          mask:linear-gradient(180deg,transparent 0,#000 22%,#000 82%,transparent 100%)}
 @keyframes ctapulse{0%,100%{opacity:.75}50%{opacity:1.25}}
 .cta-wrap h2{font-family:var(--serif);font-weight:700;font-size:clamp(27px,3.2vw,42px);color:var(--text-hi);letter-spacing:-.015em}
 .cta-wrap h2 em{font-style:normal;color:var(--accent-soft)}
@@ -306,9 +331,11 @@ section{position:relative;padding:82px 7vw;max-width:1240px;margin:0 auto}
 .cta-row{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;position:relative}
 .cta-note{margin-top:18px;font-size:12.5px;color:var(--text-lo);font-weight:600;position:relative}
 
-footer{position:relative;border-top:1px solid var(--border);padding:84px 7vw 26px;font-size:12.5px;color:var(--text-lo);overflow:hidden}
-footer::before{content:"";position:absolute;left:50%;top:0;transform:translateX(-50%);width:80vw;height:70%;pointer-events:none;
-  background:radial-gradient(ellipse 60% 100% at 50% 0%,rgba(198,79,240,.075),transparent 70%)}
+footer{position:relative;padding:84px 7vw 26px;font-size:12.5px;color:var(--text-lo);overflow:hidden}
+footer::before{content:"";position:absolute;left:50%;top:0;transform:translateX(-50%);width:92vw;height:82%;pointer-events:none;
+  background:radial-gradient(ellipse 66% 72% at 50% 44%,rgba(198,79,240,.05),transparent 74%)}
+footer::after{content:"";position:absolute;left:0;right:0;top:0;height:1px;pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(198,140,240,.09) 32%,rgba(198,140,240,.09) 68%,transparent)}
 footer a{color:var(--text-soft);font-weight:500}
 footer a:hover{color:var(--text-hi)}
 .f-top{position:relative;display:flex;justify-content:space-between;gap:56px;flex-wrap:wrap;max-width:1240px;margin:0 auto 72px}
@@ -639,7 +666,7 @@ const device=document.getElementById('device');
 const shots=[...document.querySelectorAll('#screens img')];
 const shotsR=[...document.querySelectorAll('#screens-r img')];
 const chapters=[...document.querySelectorAll('.chapter')];
-const hint=document.querySelector('.scroll-hint');
+const hint=scrub.querySelector('.scroll-hint');
 const stageGlow=document.querySelector('.stage-glow');
 const stripCells=[...document.querySelectorAll('.strip i')];
 const devshEl=document.querySelector('.devsh');
@@ -1016,7 +1043,7 @@ document.querySelectorAll('.rv').forEach(el=>{
 })();
 
 /* staggered piece-strip demo delays */
-document.querySelectorAll('.pieces i').forEach((el,i)=>el.style.animationDelay=(i*0.48)+'s');
+document.querySelectorAll('.pieces i').forEach((el,i)=>el.style.animationDelay=(i*0.33)+'s');
 
 /* count-up numbers */
 const nio=new IntersectionObserver(es=>es.forEach(e=>{
