@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>weStream — Watch it while it arrives</title>
+<meta name="description" content="weStream plays video the moment it starts downloading — directly from other people, not from a server. No accounts. No middleman.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="weStream — Watch it while it arrives">
+<meta property="og:description" content="Peer-to-peer streaming. Your movies travel directly between the people watching them — no servers, no accounts, no middleman.">
+<meta property="og:image" content="https://vukasin-djuricic.github.io/weStream-landing/assets/shots/nowplaying.webp">
+<meta property="og:url" content="https://vukasin-djuricic.github.io/weStream-landing/">
+<meta name="twitter:image" content="https://vukasin-djuricic.github.io/weStream-landing/assets/shots/nowplaying.webp">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="weStream — Watch it while it arrives">
+<meta name="twitter:description" content="Peer-to-peer streaming. No servers, no accounts, no middleman.">
+<link rel="preload" as="image" href="assets/film/f_0001.webp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M11 8.5 24 16 11 23.5Z" fill="none" stroke="%23c64ff0" stroke-width="2.2" stroke-linejoin="round"/><circle cx="11" cy="8.5" r="3.4" fill="%230f0d15" stroke="%23c64ff0" stroke-width="2.2"/><circle cx="24" cy="16" r="3.4" fill="%230f0d15" stroke="%23c64ff0" stroke-width="2.2"/><circle cx="11" cy="23.5" r="3.4" fill="%230f0d15" stroke="%23c64ff0" stroke-width="2.2"/></svg>'>
+<style>
+:root{
+  --bg:#0f0d15; --surface:#15111d; --surface-2:#1a1623; --surface-inset:#100d17;
+  --border:#221d2c; --border-strong:#2c2638; --border-violet:#34284a;
+  --text-hi:#f4f1f8; --text:#e7e1ef; --text-mid:#b3aac0; --text-soft:#8b8299; --text-lo:#756c85;
+  --accent:#c64ff0; --accent-deep:#9b3ec9; --accent-soft:#c08fe8; --cyan:#6cc8e8; --green:#46d39a;
+  --serif:'Manrope',system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Manrope',system-ui,sans-serif;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background-image:radial-gradient(rgba(198,140,240,.032) 1px,transparent 1.4px);
+  background-size:44px 44px}
+#ambient{position:fixed;inset:0;width:100vw;height:100vh;z-index:-1;pointer-events:none}
+a{color:inherit;text-decoration:none}
+::selection{background:rgba(198,79,240,.35)}
+img{user-select:none;-webkit-user-drag:none}
+
+/* ---------- nav ---------- */
+nav{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;align-items:center;justify-content:space-between;
+  padding:16px 32px;backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);
+  background:rgba(15,13,21,.5);border-bottom:1px solid rgba(34,29,44,.5)}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px;color:var(--text-hi)}
+.logo-mark{width:23px;height:23px;filter:drop-shadow(0 0 7px rgba(198,79,240,.35))}
+.nav-links{display:flex;align-items:center;gap:28px;font-size:13.5px;font-weight:600;color:var(--text-mid)}
+.nav-links a:hover{color:var(--text-hi)}
+.nav-links a.active{color:var(--text-hi);position:relative}
+.nav-links a.active:not(.btn)::after{content:"";position:absolute;left:0;right:0;bottom:-6px;height:2px;border-radius:2px;
+  background:linear-gradient(90deg,#9b3ec9,#c64ff0)}
+a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid rgba(198,79,240,.6);outline-offset:3px;border-radius:6px}
+.btn{display:inline-flex;align-items:center;gap:9px;padding:10px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  background:linear-gradient(135deg,#c64ff0,#9b3ec9);color:#fff;border:none;cursor:pointer;
+  box-shadow:0 4px 18px rgba(198,79,240,.22);transition:transform .18s,box-shadow .18s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(198,79,240,.34)}
+.btn.ghost{background:rgba(198,79,240,.1);border:1px solid var(--border-violet);box-shadow:none;color:var(--accent-soft)}
+.btn.ghost:hover{background:rgba(198,79,240,.18)}
+.btn.small{padding:9px 18px;font-size:13.5px}
+@media(max-width:680px){.nav-links a:not(.btn){display:none}}
+
+/* ---------- film scrub (Vision-Pro style frame scrubbing) ---------- */
+.film{height:340vh;position:relative}
+.film.off{display:none}
+.fsticky{position:sticky;top:0;height:100vh;overflow:hidden;background:#000}
+#filmc{position:absolute;inset:0;width:100%;height:100%;display:block}
+.fshade{position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 120% 100% at 50% 50%,transparent 55%,rgba(6,5,10,.72) 100%),
+    linear-gradient(180deg,rgba(15,13,21,.35) 0%,transparent 26%,transparent 70%,rgba(15,13,21,.7) 100%)}
+.fch{position:absolute;left:6.5vw;top:50%;transform:translateY(-50%);max-width:min(580px,33vw);text-align:left;
+  opacity:0;pointer-events:none;will-change:opacity,transform;z-index:5}
+.fch .hero-ctas{justify-content:flex-start}
+.fout{position:absolute;inset:0;pointer-events:none;opacity:0;z-index:6;
+  background:radial-gradient(ellipse 90% 70% at 50% 30%,#141019 0%,#0f0d15 60%,#0b0912 100%)}
+.fglow{position:absolute;right:-6vw;top:50%;transform:translateY(-50%);width:62vw;height:84vh;pointer-events:none;
+  background:radial-gradient(ellipse,rgba(198,79,240,.07),transparent 65%)}
+@media(max-width:820px){.fglow{display:none}}
+@media(max-width:820px){.fch{left:6vw;right:6vw;max-width:none;top:12vh;transform:none}}
+.fch h1{font-family:var(--serif);font-weight:700;font-size:clamp(34px,4.4vw,60px);line-height:1.08;color:var(--text-hi);letter-spacing:-.02em;
+  text-shadow:0 2px 24px rgba(8,6,12,.6)}
+.fch h1 em,.fch h2 em{font-style:normal;color:var(--accent-soft)}
+.fch h2{font-family:var(--serif);font-weight:700;font-size:clamp(26px,3.3vw,44px);line-height:1.12;color:var(--text-hi);letter-spacing:-.015em;
+  text-shadow:0 2px 24px rgba(8,6,12,.6)}
+.fch p{margin:14px 0 0;font-size:clamp(14px,1.15vw,16px);line-height:1.65;color:var(--text-mid);font-weight:500;max-width:460px;
+  text-shadow:0 1px 14px rgba(8,6,12,.7)}
+.fch .note{margin-top:14px;font-size:12.5px;color:var(--text-lo);font-weight:600}
+
+/* ---------- hero + product stage (one scroll-scrubbed story) ---------- */
+.scrub{height:540vh;position:relative}
+.sticky{position:sticky;top:0;height:100vh;overflow:hidden;
+  background:
+    linear-gradient(180deg,#000 0%,rgba(0,0,0,.55) 40%,rgba(0,0,0,0) 72%),
+    radial-gradient(ellipse 70% 55% at 50% 110%,rgba(198,79,240,.10),transparent 60%),
+    radial-gradient(ellipse 90% 70% at 50% 30%,#0c0a12 0%,#0b0911 60%,#090710 100%)}
+.floorglow{position:absolute;left:50%;bottom:7vh;transform:translateX(-50%);width:72vw;height:17vh;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 0%,rgba(198,79,240,.15),transparent 70%);filter:blur(8px)}
+@media(max-width:820px){.floorglow{bottom:4vh}}
+#dust{position:absolute;inset:0;width:100%;height:100%;display:block;opacity:.7}
+.vignette{position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 120% 100% at 50% 50%,transparent 52%,rgba(6,5,10,.8) 100%)}
+
+.stage{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:center;perspective:1500px;padding-bottom:19vh}
+.devsh{position:absolute;left:50%;bottom:16.8vh;width:min(52vw,660px);height:5vh;transform:translateX(-50%);
+  border-radius:50%;background:radial-gradient(ellipse,rgba(0,0,0,.6),rgba(0,0,0,0) 70%);
+  filter:blur(7px);pointer-events:none;opacity:0}
+.stage-glow{position:absolute;inset:0;pointer-events:none;opacity:0;will-change:opacity;
+  background:radial-gradient(ellipse 48% 40% at 50% 52%,rgba(198,79,240,.17),transparent 70%)}
+.device{position:relative;width:min(62vw,800px,102vh);will-change:transform,opacity;transform-style:preserve-3d;transform-origin:50% 100%}
+.frame{position:relative;border-radius:14px;overflow:hidden;background:#0b0912;
+  border:1px solid #2e2839;
+  box-shadow:0 0 0 1px rgba(0,0,0,.6),0 30px 90px rgba(0,0,0,.65),0 8px 30px rgba(198,79,240,.10)}
+.titlebar{height:30px;background:#141019;border-bottom:1px solid #1c1826;display:flex;align-items:center;gap:6px;padding:0 12px}
+.titlebar i{width:10px;height:10px;border-radius:50%;background:#2c2638}
+.titlebar span{margin-left:8px;font-size:10.5px;font-weight:700;letter-spacing:.08em;color:#5f5670;text-transform:uppercase}
+.screens{position:relative;aspect-ratio:16/10;background:#0f0d15}
+.screens img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top;opacity:0;will-change:opacity}
+.gridwrap{position:absolute;inset:0;pointer-events:none;perspective:520px;overflow:hidden;will-change:transform;
+  -webkit-mask-image:radial-gradient(ellipse 56% 46% at 50% 88%,#000 36%,transparent 78%);
+  mask-image:radial-gradient(ellipse 56% 46% at 50% 88%,#000 36%,transparent 78%)}
+.gridfloor{position:absolute;left:-55vw;right:-55vw;bottom:calc(-16vh - 104px);height:calc(66vh + 104px);
+  transform-origin:50% 0%;will-change:transform;
+  background:
+    repeating-linear-gradient(90deg,rgba(198,79,240,.22) 0 1px,transparent 1px 52px),
+    repeating-linear-gradient(0deg,rgba(198,79,240,.22) 0 1px,transparent 1px 52px);
+  animation:gridslide 3.4s linear infinite}
+@keyframes gridslide{from{transform:rotateX(61deg) translateY(-52px)}to{transform:rotateX(61deg) translateY(0)}}
+@media(prefers-reduced-motion:reduce){.gridfloor{animation:none}}
+
+.strip{position:absolute;left:50%;transform:translateX(-50%);bottom:9vh;display:flex;gap:3px;z-index:4;pointer-events:none;opacity:0}
+.strip i{width:9px;height:15px;border-radius:3px;background:#1c1826;border:1px solid #221d2c}
+.strip i.have{background:linear-gradient(180deg,#c64ff0,#9b3ec9);border-color:transparent;box-shadow:0 0 8px rgba(198,79,240,.5)}
+.strip i.flight{background:rgba(108,200,232,.85);border-color:transparent;box-shadow:0 0 8px rgba(108,200,232,.5)}
+@media(max-width:820px){.strip{display:none}}
+
+
+/* chapters: ch0 = editorial hero, others alternate sides */
+.chapter{position:absolute;top:50%;left:5.5vw;max-width:430px;opacity:0;pointer-events:none;will-change:opacity,transform;z-index:5;
+  transform:translateY(-50%)}
+.chapter.alt{left:auto;right:5.5vw;text-align:right}
+.chapter.alt .hero-ctas{justify-content:flex-end}
+.chapter.alt p{margin-left:auto}
+.chapter.center{left:50%;right:auto;top:14vh;transform:translate(-50%,0);max-width:900px;width:92vw;text-align:center}
+.chapter.center p{margin-left:auto;margin-right:auto}
+.chapter.center .hero-ctas{justify-content:center}
+.kick{font-size:12px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--accent-soft);margin-bottom:18px}
+.chapter h1{font-family:var(--serif);font-weight:700;font-size:clamp(34px,4.4vw,60px);line-height:1.08;color:var(--text-hi);letter-spacing:-.02em}
+.chapter h1 em{font-style:normal;color:var(--accent-soft)}
+.chapter h2{font-family:var(--serif);font-weight:700;font-size:clamp(24px,2.9vw,38px);line-height:1.14;color:var(--text-hi);letter-spacing:-.015em}
+.chapter h2 em{font-style:normal;color:var(--accent-soft)}
+.chapter p{margin-top:14px;font-size:clamp(14px,1.15vw,16px);line-height:1.65;color:var(--text-mid);font-weight:500;max-width:430px}
+.chapter .note{margin-top:14px;font-size:12.5px;color:var(--text-lo);font-weight:600}
+.hero-ctas{margin-top:26px;display:flex;gap:12px;flex-wrap:wrap;pointer-events:auto}
+
+.scroll-hint{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;
+  align-items:center;gap:8px;color:var(--text-lo);font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;z-index:5}
+.scroll-hint .line{width:1px;height:32px;background:linear-gradient(180deg,var(--accent),transparent);animation:drip 1.8s ease-in-out infinite}
+@keyframes drip{0%{transform:scaleY(.2);transform-origin:top;opacity:0}40%{transform:scaleY(1);opacity:1}100%{transform:scaleY(1);transform-origin:top;opacity:0}}
+
+@media(max-width:820px){
+  .device{width:88vw}
+  .chapter,.chapter.alt{top:9vh;left:6vw;right:6vw;max-width:none;text-align:left;transform:none}
+  .chapter.center{left:6vw;transform:none;text-align:center;width:auto}
+  .chapter.alt .hero-ctas{justify-content:flex-start}
+  .chapter p{max-width:none}
+}
+
+/* ---------- marquee ---------- */
+.marq{overflow:hidden;border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+  padding:20px 0;background:rgba(21,17,29,.4)}
+.marq-track{display:flex;gap:0;width:max-content;animation:marq 30s linear infinite}
+.marq span{display:inline-flex;align-items:center;gap:0;font-size:11.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--text-soft);white-space:nowrap}
+.marq b{margin:0 28px;color:var(--accent);font-weight:400}
+@keyframes marq{to{transform:translateX(-50%)}}
+
+/* ---------- sections ---------- */
+section{position:relative;padding:82px 7vw;max-width:1240px;margin:0 auto}
+.kicker{display:flex;align-items:center;gap:12px;font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--accent-soft);margin-bottom:16px}
+.kicker::before{content:"";width:24px;height:1px;background:linear-gradient(90deg,var(--accent),transparent)}
+.sec-title{font-family:var(--serif);font-weight:700;font-size:clamp(25px,2.9vw,37px);color:var(--text-hi);letter-spacing:-.015em;line-height:1.16;max-width:680px}
+.sec-title em{font-style:normal;color:var(--accent-soft)}
+.sec-sub{margin-top:16px;font-size:14.5px;line-height:1.7;color:var(--text-soft);max-width:560px;font-weight:500}
+.sec-title{position:relative;padding-bottom:16px}
+.sec-title::after{content:"";position:absolute;left:0;bottom:0;height:2px;width:42px;border-radius:2px;
+  background:linear-gradient(90deg,#9b3ec9,#c64ff0);transform:scaleX(0);transform-origin:left;
+  transition:transform .9s cubic-bezier(.2,.6,.2,1) .25s}
+.sec-title.on::after{transform:scaleX(1)}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:20px}
+
+/* bento demo cards (dataware-style live micro-UI) */
+.bento{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;margin-top:52px}
+.bcard{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px 24px;transition:border-color .25s;
+  display:flex;align-items:center;gap:24px}
+.btxt{flex:0 0 36%}
+.bcard .demo{flex:1;display:flex;flex-direction:column;justify-content:center}
+.bcard:hover{border-color:var(--border-violet)}
+.bcard h3{font-size:14px;font-weight:700;color:var(--text-hi);margin-bottom:6px}
+.btxt p{font-size:12.5px;line-height:1.6;color:var(--text-soft);font-weight:500}
+.demo{background:var(--surface-inset);border:1px solid var(--border);border-radius:12px;padding:14px 15px}
+.dhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:11.5px;font-weight:700;color:var(--text-mid)}
+@media(max-width:720px){.bcard{flex-direction:column;align-items:stretch}.btxt{flex:auto}}
+.pill{font-style:normal;font-size:10px;font-weight:700;padding:3px 9px;border-radius:999px;color:var(--text-soft);
+  background:rgba(198,79,240,.07);border:1px solid var(--border);animation:pillpulse 3.2s ease-in-out infinite}
+@keyframes pillpulse{0%,100%{opacity:.9}50%{opacity:.55}}
+.drow{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--border-soft,#1c1826)}
+.chip{width:21px;height:21px;border-radius:6px;display:flex;align-items:center;justify-content:center;
+  font-size:8.5px;font-weight:800;font-style:normal;color:rgba(255,255,255,.85)}
+.drow:nth-child(2) .chip{background:#4a3a6e}.drow:nth-child(3) .chip{background:#2d5364}.drow:nth-child(4) .chip{background:#6e3a58}
+.did{font-family:monospace;font-size:11px;color:var(--text-soft);min-width:52px}
+.dbar{flex:1;height:3px;border-radius:4px;background:#1c1826;overflow:hidden}
+.dbar i{display:block;height:100%;border-radius:4px;background:rgba(198,79,240,.42);
+  animation:dflow 4.2s ease-in-out infinite;transform-origin:left}
+.drow:nth-child(3) .dbar i{animation-delay:.6s}.drow:nth-child(4) .dbar i{animation-delay:1.2s}
+@keyframes dflow{0%,100%{transform:scaleX(.45)}50%{transform:scaleX(.95)}}
+.dspd{font-family:monospace;font-size:10.5px;color:var(--text-lo);min-width:56px;text-align:right}
+.pbar{height:3px;border-radius:5px;background:#1c1826;overflow:hidden;margin-bottom:12px}
+.pbar i{display:block;height:100%;border-radius:5px;background:rgba(198,79,240,.5);
+  animation:pfillx 9s linear infinite;transform-origin:left}
+@keyframes pfillx{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.pieces{display:flex;gap:3px;margin-bottom:12px}
+.pieces i{flex:1;height:8px;border-radius:2px;background:#1c1826;animation:pon 9s linear infinite}
+@keyframes pon{0%{background:#1c1826}6%,100%{background:rgba(198,79,240,.38)}}
+.pcap{font-size:11px;color:var(--text-lo);font-weight:600;display:flex;align-items:center;gap:7px}
+.pcap i{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s ease-in-out infinite}
+.card{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;transition:border-color .25s,transform .25s}
+.card:hover{border-color:var(--border-violet);transform:translateY(-3px)}
+.card::before,.card::after{content:"";position:absolute;width:13px;height:13px;border:1px solid rgba(198,79,240,.0);transition:border-color .3s}
+.card::before{top:-1px;left:-1px;border-right:none;border-bottom:none;border-radius:16px 0 0 0}
+.card::after{bottom:-1px;right:-1px;border-left:none;border-top:none;border-radius:0 0 16px 0}
+.card:hover::before,.card:hover::after{border-color:rgba(198,79,240,.55)}
+.card svg{width:26px;height:26px;stroke:var(--accent-soft);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;margin-bottom:18px;
+  transition:transform .3s cubic-bezier(.3,1.4,.4,1),filter .3s}
+.card:hover svg{transform:scale(1.14);filter:drop-shadow(0 0 8px rgba(198,79,240,.6))}
+.card h3{font-size:16.5px;font-weight:800;color:var(--text-hi);margin-bottom:9px}
+.card p{font-size:13.8px;line-height:1.65;color:var(--text-soft);font-weight:500}
+
+/* numbers */
+.nums{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0;margin-top:56px;
+  border-top:1px solid var(--border)}
+.num-cell{padding:44px 26px 40px;border-bottom:1px solid var(--border);text-align:center}
+.num-cell .n{font-family:var(--serif);font-weight:700;font-size:clamp(32px,3.4vw,48px);line-height:1;color:var(--text-hi);letter-spacing:-.015em}
+.num-cell .n em{font-style:normal;color:var(--accent-soft)}
+.num-cell .l{margin-top:12px;font-size:12.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-lo)}
+@media(min-width:900px){.num-cell{border-right:1px solid var(--border)}.num-cell:last-child{border-right:none}}
+
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:52px;counter-reset:step}
+.step{position:relative;background:linear-gradient(120deg,#1d1430,#15111d 70%);border:1px solid var(--border-violet);border-radius:16px;padding:30px;
+  box-shadow:0 14px 34px rgba(40,20,60,.28);overflow:hidden;transition:transform .25s,border-color .25s}
+.step:hover{transform:translateY(-3px);border-color:#4a3a68}
+.step::after{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:3px;
+  background:linear-gradient(180deg,#c64ff0,#9b3ec9);transform:scaleY(0);transform-origin:top;
+  transition:transform .8s cubic-bezier(.2,.6,.2,1) calc(var(--d,0s) + .35s)}
+.step.on::after{transform:scaleY(1)}
+.step::before{counter-increment:step;content:counter(step);position:absolute;top:22px;right:24px;
+  width:30px;height:30px;border-radius:50%;border:1px solid var(--border-violet);color:var(--accent-soft);
+  display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800}
+.step h3{font-size:16px;font-weight:800;color:var(--text-hi);margin-bottom:9px;max-width:80%}
+.step p{font-size:13.8px;line-height:1.65;color:var(--text-soft);font-weight:500}
+
+.shots{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-top:52px}
+.shot{border:1px solid var(--border);border-radius:16px;overflow:hidden;background:var(--surface);transition:border-color .25s,transform .25s}
+.shot:hover{border-color:var(--border-violet);transform:translateY(-3px)}
+.shot img{width:100%;display:block;aspect-ratio:16/10;object-fit:cover;object-position:top;transition:transform .6s cubic-bezier(.2,.6,.2,1)}
+.shot:hover img{transform:scale(1.045)}
+.shot .cap{padding:15px 18px;font-size:13.5px;font-weight:700;color:var(--text)}
+.shot .cap span{display:block;font-weight:500;color:var(--text-lo);font-size:12.5px;margin-top:3px}
+
+.trust{display:flex;gap:34px;flex-wrap:wrap;margin-top:44px}
+.trust div{font-size:13px;color:var(--text-soft);font-weight:600;display:flex;align-items:center;gap:9px;transition-delay:var(--d,0s)}
+.trust i{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px rgba(70,211,154,.7);animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* manifesto quote */
+.manifesto{position:relative;padding:120px 7vw;text-align:center;overflow:hidden}
+.manifesto::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 85% 80% at 50% 50%,rgba(198,79,240,.045),transparent 80%)}
+.manifesto .orb{position:absolute;border-radius:50%;filter:blur(70px);pointer-events:none;opacity:.3}
+.manifesto .orb.a{width:340px;height:340px;left:8%;top:12%;background:rgba(198,79,240,.16);animation:orbf 14s ease-in-out infinite}
+.manifesto .orb.b{width:280px;height:280px;right:6%;bottom:8%;background:rgba(108,200,232,.10);animation:orbf 18s ease-in-out infinite reverse}
+@keyframes orbf{0%,100%{transform:translate(0,0)}33%{transform:translate(30px,-24px)}66%{transform:translate(-22px,18px)}}
+.manifesto .qm{display:none}
+.manifesto blockquote{position:relative;font-family:var(--serif);font-weight:500;
+  font-size:clamp(18px,2vw,26px);line-height:1.55;letter-spacing:-.005em;color:var(--text-mid);max-width:780px;margin:0 auto}
+.manifesto blockquote em{font-style:normal;color:var(--accent-soft)}
+.manifesto .who{position:relative;margin-top:30px;font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-lo)}
+
+/* FAQ */
+.faq-list{margin-top:40px;max-width:760px}
+.faq-list details{border-bottom:1px solid var(--border);padding:4px 0}
+.faq-list summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:16px;
+  padding:18px 0;font-size:14.5px;font-weight:700;color:var(--text);transition:color .2s}
+.faq-list summary::-webkit-details-marker{display:none}
+.faq-list summary::after{content:"+";font-size:18px;font-weight:400;color:var(--text-lo);transition:transform .3s,color .2s;flex-shrink:0}
+.faq-list details[open] summary::after{transform:rotate(45deg);color:var(--accent-soft)}
+.faq-list summary:hover{color:var(--text-hi)}
+.faq-list details p{padding:0 0 18px;font-size:13.5px;line-height:1.7;color:var(--text-soft);font-weight:500;max-width:640px}
+
+.cta-wrap{text-align:center;padding:100px 7vw 120px;position:relative;overflow:hidden}
+.cta-wrap::before{content:"";position:absolute;inset:0;animation:ctapulse 5s ease-in-out infinite;
+  background:radial-gradient(ellipse 55% 60% at 50% 62%,rgba(198,79,240,.13),transparent 70%);pointer-events:none}
+@keyframes ctapulse{0%,100%{opacity:.75}50%{opacity:1.25}}
+.cta-wrap h2{font-family:var(--serif);font-weight:700;font-size:clamp(27px,3.2vw,42px);color:var(--text-hi);letter-spacing:-.015em}
+.cta-wrap h2 em{font-style:normal;color:var(--accent-soft)}
+.cta-wrap p{margin:18px auto 32px;color:var(--text-soft);font-size:14.5px;max-width:440px;line-height:1.7;font-weight:500}
+.cta-row{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;position:relative}
+.cta-note{margin-top:18px;font-size:12.5px;color:var(--text-lo);font-weight:600;position:relative}
+
+footer{position:relative;border-top:1px solid var(--border);padding:84px 7vw 26px;font-size:12.5px;color:var(--text-lo);overflow:hidden}
+footer::before{content:"";position:absolute;left:50%;top:0;transform:translateX(-50%);width:80vw;height:70%;pointer-events:none;
+  background:radial-gradient(ellipse 60% 100% at 50% 0%,rgba(198,79,240,.075),transparent 70%)}
+footer a{color:var(--text-soft);font-weight:500}
+footer a:hover{color:var(--text-hi)}
+.f-top{position:relative;display:flex;justify-content:space-between;gap:56px;flex-wrap:wrap;max-width:1240px;margin:0 auto 72px}
+.f-brand{max-width:300px}
+.f-brand p{margin-top:16px;font-size:13px;line-height:1.7;color:var(--text-lo);font-weight:500}
+.f-cols{display:flex;gap:88px;flex-wrap:wrap}
+.f-col{display:flex;flex-direction:column;gap:13px}
+.f-col h4{font-size:13.5px;font-weight:700;color:var(--text);margin-bottom:6px}
+.f-col a{font-size:13.5px}
+.f-bottom{position:relative;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;
+  max-width:1240px;margin:0 auto;padding-top:24px;border-top:1px solid var(--border);font-size:12px;color:var(--text-dim)}
+
+/* reveal on scroll (staggered via --d) */
+.rv{opacity:0;transform:translateY(28px);transition:opacity .8s cubic-bezier(.2,.6,.2,1) var(--d,0s),transform .8s cubic-bezier(.2,.6,.2,1) var(--d,0s)}
+.rv.on{opacity:1;transform:none}
+.card svg *{stroke-dasharray:70;stroke-dashoffset:70;transition:stroke-dashoffset 1.4s ease calc(var(--d,0s) + .25s)}
+.card.on svg *{stroke-dashoffset:0}
+.step::before{transition:transform .6s cubic-bezier(.3,1.6,.4,1) calc(var(--d,0s) + .3s),opacity .4s ease calc(var(--d,0s) + .3s);transform:scale(.3);opacity:0}
+.step.on::before{transform:scale(1);opacity:1}
+.shot.rv{transform:translateY(28px) translateX(-30px)}
+.shot.rv:nth-child(even){transform:translateY(28px) translateX(30px)}
+.shot.rv.on{transform:none}
+@media(prefers-reduced-motion:reduce){
+  .rv{opacity:1;transform:none;transition:none}
+  .scrub{height:auto}.sticky{position:relative;height:100vh}
+  .marq-track{animation:none}
+}
+
+/* ---------- mobile pass ---------- */
+@supports(height:100svh){
+  .sticky,.fsticky{height:100svh}                 /* no jump when the URL bar collapses */
+}
+@media(max-width:820px){
+  section{padding:60px 6vw}
+  nav{padding:12px 18px}
+  .fch{left:6vw;right:6vw;top:max(11vh,76px)}
+  .fch h1{font-size:clamp(27px,8vw,38px)}
+  .fch h2{font-size:clamp(21px,6.4vw,30px)}
+  .fch p{font-size:13.5px;max-width:none}
+  .chapter,.chapter.alt{top:max(9vh,72px)}
+  .chapter h1{font-size:clamp(27px,8vw,38px)}
+  .chapter h2{font-size:clamp(20px,6vw,28px)}
+  .chapter p{font-size:13.5px}
+  .film{height:300vh}
+  .scrub{height:460vh}
+  .device{width:92vw}
+  .stage{padding-bottom:15vh}
+  .devsh{bottom:13vh;width:74vw}
+  .floorglow{width:100vw;bottom:3vh}
+  .nums{margin-top:40px}
+  .num-cell{padding:30px 18px 26px;border-right:none}
+  .steps,.grid,.shots,.bento{margin-top:36px}
+  .manifesto{padding:72px 6vw}
+  .manifesto .orb{display:none}                   /* 70px blur is GPU-expensive on phones */
+  .cta-wrap{padding:68px 6vw 88px}
+  .marq{padding:14px 0}
+  footer{padding:56px 6vw 20px}
+  .f-top{gap:36px;margin-bottom:44px}
+  .f-cols{gap:44px}
+}
+@media(max-width:480px){
+  .hero-ctas{width:100%}
+  .hero-ctas .btn{flex:1;justify-content:center;min-width:150px}
+  .faq-list summary{font-size:13.5px}
+  .demo{padding:12px}
+  .dspd{min-width:48px;font-size:10px}
+}
+</style>
+</head>
+<body>
+
+<canvas id="ambient" aria-hidden="true"></canvas>
+
+<nav>
+  <a class="logo" href="#top"><svg class="logo-mark" viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="lg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c64ff0"/><stop offset="1" stop-color="#8a35d6"/></linearGradient></defs><path d="M11 8.5 24 16 11 23.5Z" fill="none" stroke="url(#lg1)" stroke-width="2.2" stroke-linejoin="round"/><circle cx="11" cy="8.5" r="3.4" fill="#0f0d15" stroke="url(#lg1)" stroke-width="2.2"/><circle cx="24" cy="16" r="3.4" fill="#0f0d15" stroke="url(#lg1)" stroke-width="2.2"/><circle cx="11" cy="23.5" r="3.4" fill="#0f0d15" stroke="url(#lg1)" stroke-width="2.2"/></svg>weStream</a>
+  <div class="nav-links">
+    <a href="#why">Why weStream</a>
+    <a href="#how">How it works</a>
+    <a href="#app">The app</a>
+    <a class="btn small" href="https://github.com/vukasin-djuricic/weStream/releases/latest" target="_blank">Download</a>
+  </div>
+</nav>
+
+<!-- ============ FILM SCRUB (activates when assets/film/ frames exist) ============ -->
+<div class="film off" id="film">
+  <div class="fsticky">
+    <div class="fglow" aria-hidden="true"></div>
+    <canvas id="filmc"></canvas>
+    <div class="fshade"></div>
+
+    <div class="fch" data-f="0">
+      <div class="kick">Peer-to-peer streaming</div>
+      <h1>Watch it <em>while</em><br>it arrives.</h1>
+      <p>weStream plays video the moment it starts downloading — directly from other people, not from a server.</p>
+      <div class="hero-ctas">
+        <a class="btn" href="https://github.com/vukasin-djuricic/weStream/releases/latest" target="_blank">Download for Windows</a>
+        <a class="btn ghost" href="https://www.youtube.com/watch?v=XfdAW8yeAB8" target="_blank">Watch the demo</a>
+      </div>
+      <div class="note">Free · Open source · No account required</div>
+    </div>
+    <div class="fch" data-f="1">
+      <h2>No server.<br><em>Just people.</em></h2>
+      <p>Every viewer becomes part of the network — the more people watch, the stronger it gets.</p>
+      <div class="hero-ctas">
+        <a class="btn" href="https://github.com/vukasin-djuricic/weStream/releases/latest" target="_blank">Download for Windows</a>
+      </div>
+    </div>
+
+    <div class="fout" aria-hidden="true"></div>
+    <div class="scroll-hint"><span>scroll</span><div class="line"></div></div>
+  </div>
+</div>
+
+<!-- ============ HERO → PRODUCT STAGE (one scrubbed story) ============ -->
+<div class="scrub" id="top">
+  <div class="sticky">
+    <canvas id="dust"></canvas>
+
+    <div class="stage-glow"></div>
+    <div class="gridwrap" aria-hidden="true"><div class="gridfloor"></div></div>
+    <div class="floorglow" aria-hidden="true"></div>
+    <div class="stage">
+      <div class="device" id="device">
+        <div class="frame">
+          <div class="titlebar"><i></i><i></i><i></i><span>weStream</span></div>
+          <div class="screens" id="screens">
+            <img src="assets/shots/nowplaying.webp" alt="weStream — Now Playing" data-s="0">
+            <img src="assets/shots/addstream.webp" alt="weStream — Add Stream" data-s="1">
+            <img src="assets/shots/nowplaying.webp" alt="weStream — Now Playing" data-s="2">
+            <img src="assets/shots/swarm.webp" alt="weStream — Swarm" data-s="3">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="strip" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <div class="devsh" aria-hidden="true"></div>
+    <div class="vignette"></div>
+
+    <div class="chapter center" data-ch="0">
+      <div class="kick">Peer-to-peer streaming</div>
+      <h1>Watch it <em>while</em><br>it arrives.</h1>
+      <p>weStream plays video the moment it starts downloading — directly from other people, not from a server.</p>
+      <div class="hero-ctas">
+        <a class="btn" href="https://github.com/vukasin-djuricic/weStream/releases/latest" target="_blank">Download for Windows</a>
+        <a class="btn ghost" href="https://www.youtube.com/watch?v=XfdAW8yeAB8" target="_blank">Watch the demo</a>
+      </div>
+      <div class="note">Free · Open source · No account required</div>
+    </div>
+
+    <div class="chapter alt" data-ch="1">
+      <h2>Share anything.<br><em>Instantly.</em></h2>
+      <p>Drop in a video and it's live — anyone with its code can start watching. No uploads, no waiting, no cloud.</p>
+    </div>
+
+    <div class="chapter" data-ch="2">
+      <h2>Press play <em>before</em><br>it finishes.</h2>
+      <p>The player fetches the scenes you're about to watch first. Skip ahead anywhere — it keeps up with you.</p>
+    </div>
+
+    <div class="chapter alt" data-ch="3">
+      <h2>Powered by <em>people.</em></h2>
+      <p>Every viewer becomes part of the network, passing the video along. The more people watch, the faster it gets.</p>
+      <div class="hero-ctas">
+        <a class="btn" href="https://github.com/vukasin-djuricic/weStream/releases/latest" target="_blank">Get weStream</a>
+      </div>
+    </div>
+
+    <div class="scroll-hint"><span>scroll</span><div class="line"></div></div>
+  </div>
+</div>
+
+<!-- ============ MARQUEE ============ -->
+<div class="marq" aria-hidden="true">
+  <div class="marq-track" id="marq-track">
+    <span>No servers<b>·</b>No accounts<b>·</b>No tracking<b>·</b>Verified piece by piece<b>·</b>Watch while it downloads<b>·</b>Free &amp; open source<b>·</b></span>
+    <span>No servers<b>·</b>No accounts<b>·</b>No tracking<b>·</b>Verified piece by piece<b>·</b>Watch while it downloads<b>·</b>Free &amp; open source<b>·</b></span>
+  </div>
+</div>
+
+<!-- ============ WHY ============ -->
+<section id="why">
+  <div class="kicker rv">Why weStream</div>
+  <h2 class="sec-title rv">No servers. No accounts.<br><em>No middleman.</em></h2>
+  <p class="sec-sub rv">Your videos travel directly between the people watching them. Nothing sits in a data center, and nothing is watching back.</p>
+
+  <div class="bento">
+    <div class="bcard rv">
+      <div class="btxt"><h3>A living swarm</h3>
+      <p>Everyone watching is also sharing — you see them, live.</p></div>
+      <div class="demo">
+        <div class="dhead"><span>Live swarm</span><i class="pill">24 peers</i></div>
+        <div class="drow"><b class="chip">A3</b><span class="did">a3f91c</span><div class="dbar"><i></i></div><span class="dspd">3.1 MB/s</span></div>
+        <div class="drow"><b class="chip">7C</b><span class="did">7c2104</span><div class="dbar"><i></i></div><span class="dspd">2.4 MB/s</span></div>
+        <div class="drow"><b class="chip">E1</b><span class="did">e10b8d</span><div class="dbar"><i></i></div><span class="dspd">1.9 MB/s</span></div>
+      </div>
+    </div>
+    <div class="bcard rv">
+      <div class="btxt"><h3>Playing while it downloads</h3>
+      <p>Pieces arrive around your playhead — playback never waits.</p></div>
+      <div class="demo">
+        <div class="pbar"><i></i></div>
+        <div class="pieces"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="pcap"><i></i>buffer 6.2s ahead · streaming from 24 people</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card rv">
+      <svg viewBox="0 0 24 24"><polygon points="6,4 20,12 6,20"/></svg>
+      <h3>Instant playback</h3><p>No waiting for a download bar. Playback starts as soon as the first pieces arrive, and stays ahead of you while the rest streams in.</p>
+    </div>
+    <div class="card rv">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><circle cx="4" cy="5" r="2"/><circle cx="20" cy="5" r="2"/><circle cx="4" cy="19" r="2"/><circle cx="20" cy="19" r="2"/><line x1="6" y1="6.5" x2="9.8" y2="10"/><line x1="18" y1="6.5" x2="14.2" y2="10"/><line x1="6" y1="17.5" x2="9.8" y2="14"/><line x1="18" y1="17.5" x2="14.2" y2="14"/></svg>
+      <h3>Direct, person to person</h3><p>The video comes from everyone who has it, all at once. There's no company in the middle and no server to go down.</p>
+    </div>
+    <div class="card rv">
+      <svg viewBox="0 0 24 24"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><polyline points="8.5,12 11,14.5 15.5,9.5"/></svg>
+      <h3>Verified, piece by piece</h3><p>Every piece of every video is integrity-checked before it reaches your screen. What you watch is exactly what was shared.</p>
+    </div>
+    <div class="card rv">
+      <svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+      <h3>Private by design</h3><p>No sign-up, no profile, no tracking. weStream doesn't know who you are — and neither does anyone else.</p>
+    </div>
+  </div>
+  <div class="trust rv">
+    <div><i></i>Free and open source</div>
+    <div><i></i>Works on your home network out of the box</div>
+    <div><i></i>You keep the original file</div>
+  </div>
+
+  <div class="nums">
+    <div class="num-cell rv"><div class="n"><span data-count="0">0</span></div><div class="l">Servers between you</div></div>
+    <div class="num-cell rv"><div class="n"><span data-count="100">0</span><em>%</em></div><div class="l">Pieces verified</div></div>
+    <div class="num-cell rv"><div class="n"><span data-count="1">0</span></div><div class="l">Window = one peer</div></div>
+    <div class="num-cell rv"><div class="n"><em>∞</em></div><div class="l">People it scales to</div></div>
+  </div>
+</section>
+
+<!-- ============ HOW ============ -->
+<section id="how">
+  <div class="kicker rv">How it works</div>
+  <h2 class="sec-title rv">Three steps. <em>No setup.</em></h2>
+  <div class="steps">
+    <div class="step rv"><h3>Add a video</h3><p>Pick any video file. weStream gives it a unique code you can hand to anyone — like a ticket to the stream.</p></div>
+    <div class="step rv"><h3>It finds the people</h3><p>Paste a code, and weStream automatically locates everyone who has that video and connects to all of them at once.</p></div>
+    <div class="step rv"><h3>Watch immediately</h3><p>The video starts playing while it's still arriving. And as you watch, you quietly help pass it along to the next viewer.</p></div>
+  </div>
+</section>
+
+<!-- ============ APP ============ -->
+<section id="app">
+  <div class="kicker rv">The app</div>
+  <h2 class="sec-title rv">Everything in <em>one window.</em></h2>
+  <p class="sec-sub rv">A clean player with your library, live progress, and a map of the people you're streaming with.</p>
+  <div class="shots">
+    <div class="shot rv"><img src="assets/shots/nowplaying.webp" alt="Now Playing screen" loading="lazy"><div class="cap">Now Playing<span>Full-screen playback with live download progress under the scrubber</span></div></div>
+    <div class="shot rv"><img src="assets/shots/library.webp" alt="Library screen" loading="lazy"><div class="cap">Library<span>Continue watching, plus everything you're sharing</span></div></div>
+    <div class="shot rv"><img src="assets/shots/addstream.webp" alt="Add Stream screen" loading="lazy"><div class="cap">Add Stream<span>Drop a file in to share it, or paste a code to watch</span></div></div>
+    <div class="shot rv"><img src="assets/shots/swarm.webp" alt="Swarm screen" loading="lazy"><div class="cap">Your network<span>See the people you're streaming with, live</span></div></div>
+  </div>
+</section>
+
+<!-- ============ FAQ ============ -->
+<section id="faq">
+  <div class="kicker rv">FAQ</div>
+  <h2 class="sec-title rv">Questions, answered.</h2>
+  <div class="faq-list">
+    <details class="rv"><summary>Do I need an account?</summary><p>No. There's nothing to sign up for and nothing to log into — download the app and it's yours. weStream has no servers, so there's nowhere for an account to even live.</p></details>
+    <details class="rv"><summary>Where do my videos actually go?</summary><p>Directly between devices. When you share a video, it stays on your computer — viewers pull pieces of it straight from you (and from each other). Nothing is uploaded to a cloud.</p></details>
+    <details class="rv"><summary>Can I really watch before the download finishes?</summary><p>Yes — that's the whole point. The player fetches the pieces nearest to your playhead first, so playback starts in seconds and stays ahead of you. Skip anywhere; it re-prioritizes instantly.</p></details>
+    <details class="rv"><summary>What do I give a friend so they can watch?</summary><p>A short code. Every shared video gets a unique fingerprint — send it over any chat, they paste it into Add Stream, and the network finds you automatically.</p></details>
+    <details class="rv"><summary>How do I know the video isn't corrupted or tampered with?</summary><p>Every piece is checked against a cryptographic fingerprint before it's accepted. If a single byte is wrong, the piece is thrown away and re-fetched — what you watch is exactly what was shared.</p></details>
+  </div>
+</section>
+
+<!-- ============ MANIFESTO ============ -->
+<div class="manifesto">
+  <div class="orb a" aria-hidden="true"></div>
+  <div class="orb b" aria-hidden="true"></div>
+  <span class="qm rv" aria-hidden="true">"</span>
+  <blockquote class="rv">The internet was built to connect people directly. Somewhere along the way, servers moved in between. weStream takes them back out — <em>your movies travel from one living room to the next,</em> never through a data center.</blockquote>
+  <div class="who rv">The idea behind weStream</div>
+</div>
+
+<!-- ============ CTA ============ -->
+<div class="cta-wrap">
+  <h2 class="rv">Start streaming <em>tonight.</em></h2>
+  <p class="rv">Download weStream, share a video with a friend, and watch it together — no server between you.</p>
+  <div class="cta-row rv">
+    <a class="btn" href="https://github.com/vukasin-djuricic/weStream/releases/latest" target="_blank">Download for Windows</a>
+    <a class="btn ghost" href="https://www.youtube.com/watch?v=XfdAW8yeAB8" target="_blank">Watch the demo</a>
+  </div>
+  <div class="cta-note rv">Free · Open source · No account required</div>
+</div>
+
+<footer>
+  <div class="f-top">
+    <div class="f-brand">
+      <a class="logo" href="#top"><svg class="logo-mark" viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="lg2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c64ff0"/><stop offset="1" stop-color="#8a35d6"/></linearGradient></defs><path d="M11 8.5 24 16 11 23.5Z" fill="none" stroke="url(#lg2)" stroke-width="2.2" stroke-linejoin="round"/><circle cx="11" cy="8.5" r="3.4" fill="#0f0d15" stroke="url(#lg2)" stroke-width="2.2"/><circle cx="24" cy="16" r="3.4" fill="#0f0d15" stroke="url(#lg2)" stroke-width="2.2"/><circle cx="11" cy="23.5" r="3.4" fill="#0f0d15" stroke="url(#lg2)" stroke-width="2.2"/></svg>weStream</a>
+      <p>Streaming without the middleman — your movies travel directly between the people watching them.</p>
+    </div>
+    <div class="f-cols">
+      <div class="f-col"><h4>Product</h4>
+        <a href="https://github.com/vukasin-djuricic/weStream/releases/latest" target="_blank">Download</a>
+        <a href="https://www.youtube.com/watch?v=XfdAW8yeAB8" target="_blank">Watch the demo</a>
+        <a href="https://github.com/vukasin-djuricic/weStream" target="_blank">Source on GitHub</a>
+      </div>
+      <div class="f-col"><h4>Explore</h4>
+        <a href="#why">Why weStream</a>
+        <a href="#how">How it works</a>
+        <a href="#app">The app</a>
+        <a href="#faq">FAQ</a>
+      </div>
+    </div>
+  </div>
+  <div class="f-bottom">
+    <div>© 2026 weStream — built by Vukašin Đuričić</div>
+    <div style="font-family:monospace;font-size:11px;letter-spacing:.08em;color:var(--text-dim,#5f5670)">kademlia · sha-1 verified · range/206</div>
+  </div>
+</footer>
+
+<script>
+/* ============ one scrubbed story: editorial hero → product stage ============ */
+const scrub=document.querySelector('.scrub');
+const device=document.getElementById('device');
+const shots=[...document.querySelectorAll('#screens img')];
+const shotsR=[...document.querySelectorAll('#screens-r img')];
+const chapters=[...document.querySelectorAll('.chapter')];
+const hint=document.querySelector('.scroll-hint');
+const stageGlow=document.querySelector('.stage-glow');
+const stripCells=[...document.querySelectorAll('.strip i')];
+const devshEl=document.querySelector('.devsh');
+const stripWrap=document.querySelector('.strip');
+const gridwEl=document.querySelector('.gridwrap');
+
+/* chapter windows over p: ch0 is the hero (visible at p=0) */
+const chWins=[[-.01,0.0,0.13,0.22],[0.22,0.31,0.42,0.52],[0.52,0.60,0.71,0.80],[0.80,0.88,1.0,1.01]];
+const win=(x,a,b,c,d)=>x<a||x>d?0:x<b?(x-a)/(b-a):x<c?1:1-(x-c)/(d-c);
+const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+
+let p=0, ps=0;
+function readScroll(){
+  const r=scrub.getBoundingClientRect();
+  const total=r.height-innerHeight;
+  p=Math.min(1,Math.max(0,-r.top/total));
+  return r;
+}
+
+/* ambient dust */
+const dust=document.getElementById('dust');
+const dctx=dust.getContext('2d');
+let W=0,H=0,DPR=1;
+function resize(){DPR=Math.min(devicePixelRatio||1,1.5);W=dust.clientWidth;H=dust.clientHeight;dust.width=W*DPR;dust.height=H*DPR;}
+resize();addEventListener('resize',resize);
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const rnd=mulberry32(42);
+/* pre-rendered glow sprites — one drawImage beats gradient+arc per particle */
+function makeDot(r,g,b){const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d');
+  const gr=x.createRadialGradient(32,32,0,32,32,32);
+  gr.addColorStop(0,'rgba(255,255,255,.95)');gr.addColorStop(.22,`rgba(${r},${g},${b},.8)`);gr.addColorStop(1,`rgba(${r},${g},${b},0)`);
+  x.fillStyle=gr;x.fillRect(0,0,64,64);return c;}
+const DOT_P=makeDot(198,110,245),DOT_C=makeDot(108,200,232),DOT_K=makeDot(238,127,176);
+const motes=Array.from({length:44},()=>({x:rnd(),y:rnd(),z:0.25+rnd()*0.75,ph:rnd()*Math.PI*2,sp:0.004+rnd()*0.012}));
+
+let t0=performance.now();
+function frame(now){
+  const t=(now-t0)/1000;
+  const sr=readScroll();
+  if(sr.bottom<-4||sr.top>innerHeight+4){requestAnimationFrame(frame);return;} /* off-screen: skip all work */
+  ps+=(p-ps)*0.09;
+  const q=ps;
+  const wide=innerWidth>820;
+
+  /* chapters */
+  chapters.forEach((el,i)=>{const [a,b,c,d]=chWins[i];const o=win(q,a,b,c,d);
+    el.style.opacity=o;
+    const base=el.classList.contains('center')?'translate(-50%,0)':(wide?'translateY(-50%)':'');
+    el.style.transform=`${base} translateY(${(1-o)*26}px)`;
+    el.style.pointerEvents=o>0.5?'auto':'none';});
+  hint.style.opacity=q<0.03?1:0;
+
+  /* screenshot cross-fade */
+  for(let i=0;i<4;i++){
+    const [a,b,c,d]=chWins[i];
+    const o=i===0?Math.max(win(q,a,b,c,d),1-q*5):win(q,a-0.02,b-0.02,c,d);
+    shots[i].style.opacity=o; if(shotsR[i])shotsR[i].style.opacity=o;
+  }
+
+  /* device: settles onto the pedestal, then chapter-driven side shifts */
+  const ip=Math.min(1,q/0.18), ie=ease(ip);      /* intro 0..1 over first 18% */
+  const offs=[0,-6.5,6.5,-6.5];
+  let cx=0,wsum=0;
+  for(let i=0;i<4;i++){const [a,b,c,d]=chWins[i];const o=win(q,a,b,c,d);cx+=o*offs[i];wsum+=o;}
+  if(wsum>0.001) cx/=Math.max(wsum,1);
+  if(!wide) cx=0;
+  /* finale: window recenters, glow blooms, floor line ignites */
+  const finK=ease(Math.min(1,Math.max(0,(q-0.93)/0.07)));
+  cx*=(1-finK);
+  const tilt=((10-ease(q)*20)*ip - cx*0.55)*(1-finK);
+  const pitch=(3.2-ease(q)*2)*(1-finK*0.5);
+  const scale=0.86+ie*0.08+ease(q)*0.05+finK*0.04+Math.sin(t*0.7)*0.003;
+  const rise=(1-ie)*8;
+  device.style.opacity=ie.toFixed(3);
+  device.style.transform=`translateX(${cx}vw) translateY(${rise}vh) rotateX(${pitch}deg) rotateY(${tilt}deg) scale(${scale})`;
+  if(devshEl){devshEl.style.opacity=(0.9*ie).toFixed(3);
+    devshEl.style.transform=`translateX(calc(-50% + ${cx}vw)) scaleX(${0.82+0.18*ie*scale})`;}
+  if(stripWrap)stripWrap.style.opacity=ie.toFixed(3);
+  /* grid floor: fades in with the window + counter-parallax for real depth */
+  if(gridwEl){gridwEl.style.opacity=(0.3+0.7*ie).toFixed(3);
+    gridwEl.style.transform=`translateX(${-cx*0.5}vw)`;}
+
+  /* glow + piece strip */
+  stageGlow.style.opacity=Math.min(1,q*1.5+finK*0.8);
+  const n=stripCells.length, have=Math.floor(q*1.12*n);
+  for(let i=0;i<n;i++){
+    const c=stripCells[i];
+    const cls=i<have?'have':(i<have+3&&q>0.01?'flight':'');
+    if(c.dataset.s!==cls){c.dataset.s=cls;c.className=cls;}
+  }
+
+  /* dust (sprite-based) */
+  dctx.setTransform(DPR,0,0,DPR,0,0);
+  dctx.clearRect(0,0,W,H);
+  for(const m of motes){
+    const y=(m.y + t*m.sp)%1;
+    const x=m.x + Math.sin(t*0.25+m.ph)*0.012;
+    const s=m.z*2.4*4.5, a=0.05+0.1*m.z*(0.6+0.4*Math.sin(t*0.8+m.ph));
+    dctx.globalAlpha=Math.min(1,a*1.5);
+    dctx.drawImage(DOT_P,x*W-s/2,(1-y)*H-s/2,s,s);
+  }
+  dctx.globalAlpha=1;
+
+  requestAnimationFrame(frame);
+}
+if(!matchMedia('(prefers-reduced-motion: reduce)').matches){
+  requestAnimationFrame(frame);
+}else{
+  shots[0].style.opacity=1;shotsR[0].style.opacity=1;
+  chapters.forEach(el=>{el.style.opacity=1;el.style.position='relative';el.style.transform='none';el.style.marginBottom='40px';});
+}
+
+/* ============ eased wheel scrolling (dataware feel: starts soft, catches up) ============ */
+(function(){
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if(matchMedia('(pointer: coarse)').matches) return;      /* touch stays native */
+  let target=scrollY,cur=scrollY,raf=null;
+  const maxS=()=>document.documentElement.scrollHeight-innerHeight;
+  addEventListener('wheel',e=>{
+    if(e.ctrlKey) return;                                   /* keep pinch-zoom */
+    e.preventDefault();
+    const d=e.deltaMode===1?e.deltaY*16:e.deltaY;
+    target=Math.max(0,Math.min(maxS(),target+d));
+    if(!raf) raf=requestAnimationFrame(step);
+  },{passive:false});
+  function step(){
+    cur+=(target-cur)*0.088;
+    if(Math.abs(target-cur)<0.5){cur=target;scrollTo({top:cur,behavior:'instant'});raf=null;return;}
+    scrollTo({top:cur,behavior:'instant'});
+    raf=requestAnimationFrame(step);
+  }
+  addEventListener('scroll',()=>{if(!raf){target=cur=scrollY;}}); /* resync on scrollbar/keys/anchors */
+})();
+
+/* ============ ambient particles across the whole page (always alive) ============ */
+(function(){
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const av=document.getElementById('ambient'),ax=av.getContext('2d');
+  let AW=0,AH=0,AD=1;
+  function asz(){AD=Math.min(devicePixelRatio||1,1.5);AW=innerWidth;AH=innerHeight;av.width=AW*AD;av.height=AH*AD;}
+  asz();addEventListener('resize',asz);
+  const arnd=mulberry32(777);
+  const amb=Array.from({length:220},()=>({
+    x:arnd(),y:arnd(),z:0.25+arnd()*0.75,ph:arnd()*Math.PI*2,
+    sp:0.006+arnd()*0.016,sw:0.008+arnd()*0.014,cyan:arnd()<0.16}));
+  (function aloop(now){
+    const t=now/1000;
+    /* a living network, not a starfield: fewer nodes, interconnected when close */
+    const doc=document.documentElement;
+    const sp2=Math.min(1,Math.max(0,scrollY/((doc.scrollHeight-innerHeight)||1))*2.6);
+    const active=Math.floor(22+sp2*20);
+    ax.setTransform(AD,0,0,AD,0,0);
+    ax.clearRect(0,0,AW,AH);
+    const pts=[];
+    for(let i=0;i<active;i++){const m=amb[i];
+      const y=(m.y+t*m.sp)%1;
+      const x=(m.x+Math.sin(t*0.2+m.ph)*m.sw+1)%1;
+      pts.push([x*AW,(1-y)*AH,m]);
+    }
+    /* connections between nearby nodes */
+    const thr=Math.min(AW,AH)*0.16, thr2=thr*thr;
+    ax.lineWidth=1;
+    for(let i=0;i<pts.length;i++){
+      for(let j=i+1;j<pts.length;j++){
+        const ddx=pts[i][0]-pts[j][0],ddy=pts[i][1]-pts[j][1],d2=ddx*ddx+ddy*ddy;
+        if(d2<thr2){
+          const aL=(1-Math.sqrt(d2)/thr)*0.14;
+          ax.strokeStyle=`rgba(198,120,240,${aL})`;
+          ax.beginPath();ax.moveTo(pts[i][0],pts[i][1]);ax.lineTo(pts[j][0],pts[j][1]);ax.stroke();
+        }
+      }
+    }
+    for(const [px2,py2,m] of pts){
+      const tw=0.5+0.5*Math.sin(t*0.9+m.ph);
+      const s=m.z*2.1*7, a=(0.12+0.3*m.z)*tw;
+      ax.globalAlpha=Math.min(1,a*1.7);
+      ax.drawImage(m.cyan?DOT_C:DOT_P,px2-s/2,py2-s/2,s,s);
+    }
+    ax.globalAlpha=1;
+    requestAnimationFrame(aloop);
+  })(performance.now());
+})();
+
+/* reveal on scroll, staggered among siblings */
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('on');io.unobserve(e.target);}}),{threshold:0.12});
+document.querySelectorAll('.rv').forEach(el=>{
+  const sibs=[...el.parentElement.children].filter(c=>c.classList&&c.classList.contains('rv'));
+  if(sibs.length>1) el.style.setProperty('--d',(sibs.indexOf(el)*0.09)+'s');
+  io.observe(el);
+});
+
+/* ============ Vision-Pro film scrubber (auto-activates when frames exist) ============ */
+(function(){
+  const FCOUNT=241;                                     /* set to the extracted frame count */
+  const furl=i=>`assets/film/f_${String(i+1).padStart(4,'0')}.webp`;
+  const filmEl=document.getElementById('film');
+  const probe=new Image();
+  probe.onload=init; probe.onerror=()=>{};              /* stay hidden without frames */
+  probe.src=furl(0);
+
+  function init(){
+    filmEl.classList.remove('off');
+    /* demote the product-stage hero chapter — the film now owns the headline */
+    const ch0=document.querySelector('.chapter.center');
+    if(ch0){ch0.classList.remove('center');
+      ch0.innerHTML='<h2>This is <em>weStream.</em></h2><p>A player, a library, and your own network — in one window. Keep scrolling to see it work.</p>';}
+
+    const cv=document.getElementById('filmc'),fx=cv.getContext('2d');
+    let FW=0,FH=0,FD=1,fq=0,fp=-1,featherKey='',fG=null;
+    function fsz(){FD=Math.min(devicePixelRatio||1,1.5);FW=cv.clientWidth;FH=cv.clientHeight;cv.width=FW*FD;cv.height=FH*FD;fp=-1;}
+    fsz();addEventListener('resize',fsz);
+
+    const imgs=new Array(FCOUNT),ok=new Array(FCOUNT).fill(false);
+    /* coarse pass first (every 6th frame), then fill in — scrubbing works early everywhere */
+    const order=[];
+    for(let i=0;i<FCOUNT;i+=6)order.push(i);
+    for(let i=0;i<FCOUNT;i++)if(i%6)order.push(i);
+    let loadIdx=0,inflight=0;
+    function pump(){
+      while(inflight<8&&loadIdx<order.length){
+        const i=order[loadIdx++];const im=new Image();
+        im.fetchPriority=loadIdx<=14?'auto':'low';       /* don't fight the initial page load */
+        const done=()=>{inflight--;pump();};
+        im.onload=()=>{                                  /* pre-decode so drawing never stalls */
+          if(im.decode){im.decode().then(()=>{ok[i]=true;done();}).catch(()=>{ok[i]=true;done();});}
+          else{ok[i]=true;done();}
+        };
+        im.onerror=done;
+        im.src=furl(i);imgs[i]=im;inflight++;
+      }
+    }
+    if('requestIdleCallback' in window)requestIdleCallback(()=>pump(),{timeout:700});
+    else setTimeout(pump,250);
+
+    const fchs=[...filmEl.querySelectorAll('.fch')];
+    const fWins=[[-.01,0,.44,.54],[.56,.66,1.02,1.03]];   /* one swap, second text holds to the end */
+    const fhint=filmEl.querySelector('.scroll-hint');
+    const fout=filmEl.querySelector('.fout');
+
+    /* ambient particles around the node — alive while idle, dissolve on scroll */
+    const prnd=mulberry32(2026);
+    const motes2=Array.from({length:36},()=>({
+      ang:prnd()*Math.PI*2, rad:0.34+prnd()*0.5, spd:(prnd()<0.5?-1:1)*(0.05+prnd()*0.12),
+      size:0.7+prnd()*1.9, ph:prnd()*Math.PI*2, ecc:0.55+prnd()*0.3, pink:prnd()<0.25}));
+    /* free-floating drifters across the whole film area, alive the entire scrub */
+    const drift=Array.from({length:16},()=>({x:prnd(),y:prnd(),z:0.3+prnd()*0.7,ph:prnd()*Math.PI*2,sp:0.005+prnd()*0.014}));
+
+    (function floop(){
+      const r=filmEl.getBoundingClientRect();
+      if(r.bottom<-4||r.top>innerHeight+4){requestAnimationFrame(floop);return;} /* off-screen: skip all work */
+      const total=r.height-innerHeight;
+      const raw=Math.min(1,Math.max(0,-r.top/total));
+      fq+=(raw-fq)*0.12;
+
+      /* nearest loaded frame (either direction) — film finishes by 88%, the rest is the exit move */
+      const target=Math.round(Math.min(1,fq/0.88)*(FCOUNT-1));
+      let want=-1;
+      for(let d=0;d<FCOUNT;d++){
+        if(target-d>=0&&ok[target-d]){want=target-d;break;}
+        if(target+d<FCOUNT&&ok[target+d]){want=target+d;break;}
+      }
+      const exitK=ease(Math.min(1,Math.max(0,(fq-0.9)/0.1))); /* exit choreography over the last 10% */
+      const tNow=performance.now()/1000;
+      fx.setTransform(FD,0,0,FD,0,0);
+      fx.clearRect(0,0,FW,FH);
+      /* free drifters — subtle life across the whole frame (sprite-based) */
+      for(const m of drift){
+        const yy=(m.y+tNow*m.sp)%1;
+        const xx=m.x+Math.sin(tNow*0.22+m.ph)*0.014;
+        const sD=m.z*2.2*4.5;
+        fx.globalAlpha=Math.min(1,(0.05+0.09*m.z*(0.6+0.4*Math.sin(tNow*0.8+m.ph)))*(1-exitK*0.8)*1.5);
+        fx.drawImage(DOT_P,xx*FW-sD/2,(1-yy)*FH-sD/2,sD,sD);
+      }
+      fx.globalAlpha=1;
+      if(want>=0){
+        const im=imgs[want];
+        const fwide=FW>820;
+        let s,w,h,dx,dy;
+        const breathe=1+0.005*Math.sin(tNow*0.8)*Math.min(1,Math.max(0,(fq-0.84)/0.06)); /* gentle life once film ends */
+        if(fwide){
+          /* contained on the right at native-ish scale (sharp), text owns the left */
+          s=Math.min((FW*0.60)/im.width,(FH*0.86)/im.height)*(1-0.10*exitK)*breathe;
+          w=im.width*s;h=im.height*s;
+          dx=FW-w-FW*0.045;dy=(FH-h)/2-FH*0.13*exitK;
+        }else{
+          s=Math.max(FW/im.width,FH/im.height)*(1-0.06*exitK);
+          w=im.width*s;h=im.height*s;
+          dx=(FW-w)/2;dy=(FH-h)/2-FH*0.1*exitK;
+        }
+        fx.globalAlpha=1-0.45*exitK;
+        fx.drawImage(im,dx,dy,w,h);
+        fx.globalAlpha=1;
+
+        /* feather all four edges into black — gradients cached until geometry changes */
+        const fe=Math.min(w,h)*0.09;
+        const fkey=((dx*4)|0)+','+((dy*4)|0)+','+((w*4)|0);
+        if(fkey!==featherKey){
+          featherKey=fkey;
+          const mk=(x0,y0,x1,y1)=>{const gg=fx.createLinearGradient(x0,y0,x1,y1);
+            gg.addColorStop(0,'rgba(0,0,0,1)');gg.addColorStop(1,'rgba(0,0,0,0)');return gg;};
+          fG={l:mk(dx,0,dx+fe,0),r:mk(dx+w,0,dx+w-fe,0),t:mk(0,dy,0,dy+fe),b:mk(0,dy+h,0,dy+h-fe)};
+        }
+        fx.fillStyle=fG.l;fx.fillRect(dx-1,dy-1,fe+1,h+2);
+        fx.fillStyle=fG.r;fx.fillRect(dx+w-fe,dy-1,fe+1,h+2);
+        fx.fillStyle=fG.t;fx.fillRect(dx-1,dy-1,w+2,fe+1);
+        fx.fillStyle=fG.b;fx.fillRect(dx-1,dy+h-fe,w+2,fe+1);
+
+        /* finale: once the film has played out, the network keeps pulsing on its own time */
+        const doneK=Math.min(1,Math.max(0,(fq-0.84)/0.06));
+        if(doneK>0.01){
+          const cxp=dx+w/2,cyp=dy+h/2;
+          for(let k=0;k<3;k++){
+            const pr=(tNow*0.22+k/3)%1;
+            fx.strokeStyle=`rgba(198,79,240,${Math.max(0,(1-pr)*(1-pr)*0.4*doneK*(1-exitK*0.7))})`;
+            fx.lineWidth=1.5;
+            fx.beginPath();fx.arc(cxp,cyp,Math.max(1,(0.12+pr*0.55)*FH),0,7);fx.stroke();
+          }
+        }
+
+        /* exit streaks: light trails rising into the next section */
+        if(exitK>0.02){
+          for(let i=0;i<26;i++){
+            const sx=((i*0.171+0.033)%1)*FW;
+            const pr=((tNow*(0.22+(i%5)*0.055))+i*0.37)%1;
+            const sy=FH*(1.05-pr*1.25);
+            const len=FH*0.07*(0.5+(i%3)*0.45);
+            const aS=Math.max(0,exitK*(1-pr)*0.4);
+            const g2=fx.createLinearGradient(0,sy,0,sy+len);
+            g2.addColorStop(0,`rgba(198,140,240,${aS})`);g2.addColorStop(1,'rgba(198,140,240,0)');
+            fx.fillStyle=g2;fx.fillRect(sx,sy,1.5,len);
+          }
+        }
+
+        /* particles orbiting the node, dissolving as you scroll */
+        const pA=Math.max(0,1-fq*2.6)*(1-exitK);
+        if(pA>0.01){
+          const cx2=dx+w/2,cy2=dy+h/2,R=Math.min(w,h)*0.5;
+          for(const m of motes2){
+            const a=m.ang+tNow*m.spd;
+            const x=cx2+Math.cos(a)*m.rad*R*1.35;
+            const y=cy2+Math.sin(a)*m.rad*R*m.ecc;
+            const tw=0.45+0.55*Math.sin(tNow*1.3+m.ph), sM=m.size*4.5;
+            fx.globalAlpha=Math.min(1,0.55*pA*tw*1.4);
+            fx.drawImage(m.pink?DOT_K:DOT_P,x-sM/2,y-sM/2,sM,sM);
+          }
+          fx.globalAlpha=1;
+        }
+      }
+      const fwideT=innerWidth>820;
+      fchs.forEach((el,i)=>{const [a,b,c,d]=fWins[i];const o=win(fq,a,b,c,d);
+        el.style.opacity=i===1?o*(1-0.55*exitK):o;
+        const lift=(1-o)*24-(i===1?exitK*80:0);        /* second text glides up and away on exit */
+        el.style.transform=fwideT?`translateY(calc(-50% + ${lift}px))`:`translateY(${lift}px)`;
+        el.style.pointerEvents=o>0.5?'auto':'none';});
+      fout.style.opacity=0.3*exitK;                     /* gentle dim only, never a black hole */
+      if(fhint)fhint.style.opacity=fq<0.03?1:0;
+      requestAnimationFrame(floop);
+    })();
+  }
+})();
+
+/* nav scrollspy */
+(function(){
+  const links=[...document.querySelectorAll('.nav-links a[href^="#"]')];
+  if(!links.length) return;
+  const secs=links.map(a=>document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  const spy=new IntersectionObserver(es=>{
+    es.forEach(e=>{
+      if(!e.isIntersecting) return;
+      links.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+e.target.id));
+    });
+  },{rootMargin:'-40% 0px -55% 0px'});
+  secs.forEach(s=>spy.observe(s));
+})();
+
+/* staggered piece-strip demo delays */
+document.querySelectorAll('.pieces i').forEach((el,i)=>el.style.animationDelay=(i*0.48)+'s');
+
+/* count-up numbers */
+const nio=new IntersectionObserver(es=>es.forEach(e=>{
+  if(!e.isIntersecting) return;
+  const el=e.target, target=+el.dataset.count, dur=1400, s=performance.now();
+  (function tick(now){
+    const k=Math.min(1,(now-s)/dur), v=Math.round(target*(1-Math.pow(1-k,3)));
+    el.textContent=v;
+    if(k<1) requestAnimationFrame(tick);
+  })(s);
+  nio.unobserve(el);
+}),{threshold:0.6});
+document.querySelectorAll('[data-count]').forEach(el=>nio.observe(el));
+</script>
+</body>
+</html>
